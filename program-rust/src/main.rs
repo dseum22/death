@@ -16,10 +16,11 @@ struct Vertex<const D: usize> {
 
 impl<const D: usize> Vertex<D> {
     fn create(id: u32) -> Self {
-        Self {
-            id,
-            coords: [rand::thread_rng().gen_range(0.0..=1.0); D],
+        let mut coords = [0.0; D];
+        for i in 0..D {
+            coords[i] = rand::thread_rng().gen_range(0.0..=1.0);
         }
+        Self { id, coords }
     }
 }
 
@@ -77,9 +78,12 @@ fn run_trial<const D: usize>(num_vertices: u32) -> f32 {
     let mut map = HashMap::<Vertex<D>, f32>::new();
     let mut total_weight: f32 = 0.0;
     for vertex in &vertices {
-        map.insert(*vertex, 2.1);
+        if vertex.id == 0 {
+            map.insert(*vertex, 0.0);
+        } else {
+            map.insert(*vertex, 10.0);
+        }
     }
-
     if let Some(root_vertex) = vertices.get(0) {
         heap.push(VertexWeight::create(*root_vertex, 0.0));
         let mut to_insert = Vec::new();
