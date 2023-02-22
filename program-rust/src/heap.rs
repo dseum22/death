@@ -1,79 +1,6 @@
-use rand::Rng;
-// use std::cmp::Ordering;
+use crate::graph::elements::Vertex;
+use crate::graph::elements::VertexWeight;
 use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
-
-#[derive(Clone, Copy, Debug)]
-pub struct Vertex<const D: usize> {
-    pub id: u32,
-    pub coords: [f32; D],
-    pub val: f32,
-}
-
-impl<const D: usize> Vertex<D> {
-    pub fn create(id: u32) -> Self {
-        if D == 0 {
-            let coords = [0.0; D];
-            let val = rand::thread_rng().gen_range(0.0..=1.0);
-            Self { id, coords, val }
-        } else {
-            let mut coords = [0.0; D];
-            let val = 0.0;
-            for i in 0..D {
-                coords[i] = rand::thread_rng().gen_range(0.0..=1.0);
-            }
-            Self { id, coords, val }
-        }
-    }
-}
-
-impl<const D: usize> Eq for Vertex<D> {}
-
-impl<const D: usize> PartialEq for Vertex<D> {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-impl<const D: usize> Hash for Vertex<D> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct VertexWeight<const D: usize> {
-    pub vertex: Vertex<D>,
-    pub weight: f32,
-}
-
-impl<const D: usize> VertexWeight<D> {
-    pub fn create(vertex: Vertex<D>, weight: f32) -> Self {
-        Self { vertex, weight }
-    }
-}
-
-// impl<const D: usize> Eq for VertexWeight<D> {}
-
-// impl<const D: usize> PartialEq for VertexWeight<D> {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.vertex == other.vertex
-//     }
-// }
-
-// impl<const D: usize> Ord for VertexWeight<D> {
-//     fn cmp(&self, other: &Self) -> Ordering {
-//         other.weight.total_cmp(&self.weight)
-//         // self.weight.total_cmp(&other.weight)
-//     }
-// }
-
-// impl<const D: usize> PartialOrd for VertexWeight<D> {
-//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-//         other.weight.partial_cmp(&self.weight)
-//         // self.weight.partial_cmp(&other.weight)
-//     }
-// }
 
 #[derive(Debug)]
 pub struct BinaryHeap<const D: usize> {
@@ -109,19 +36,17 @@ impl<const D: usize> BinaryHeap<D> {
 
     fn sort(&mut self, i: usize) {
         let mut j = i;
-        if j != 0 {
-            while j != 0 {
-                if let Some(vw) = self.weights.get(j) {
-                    if let Some(p_vw) = self.weights.get(self.parent(j)) {
-                        if p_vw.weight > vw.weight {
-                            let p_index = self.parent(j);
-                            self.indices.insert(vw.vertex, p_index);
-                            self.indices.insert(p_vw.vertex, j);
-                            self.weights.swap(p_index, j);
-                            j = p_index;
-                        } else {
-                            break;
-                        }
+        while j != 0 {
+            if let Some(vw) = self.weights.get(j) {
+                if let Some(p_vw) = self.weights.get(self.parent(j)) {
+                    if p_vw.weight > vw.weight {
+                        let p_index = self.parent(j);
+                        self.indices.insert(vw.vertex, p_index);
+                        self.indices.insert(p_vw.vertex, j);
+                        self.weights.swap(p_index, j);
+                        j = p_index;
+                    } else {
+                        break;
                     }
                 }
             }
@@ -131,10 +56,8 @@ impl<const D: usize> BinaryHeap<D> {
     pub fn insert(&mut self, vw: VertexWeight<D>) {
         match self.indices.get(&vw.vertex) {
             Some(index) => {
-                if let Some(found_vw) = self.weights.get_mut(*index) {
-                    *found_vw = vw;
-                    self.sort(*index);
-                }
+                self.weights[*index] = vw;
+                self.sort(*index);
             }
             None => {
                 let i = self.len;
@@ -152,13 +75,19 @@ impl<const D: usize> BinaryHeap<D> {
         } else {
             self.len -= 1;
             let last_vw = self.weights.get(self.len).unwrap().clone();
-            let vw = self.weights.get_mut(0).unwrap();
-            let out = vw.clone();
-            self.indices.remove(&vw.vertex);
-            *vw = last_vw;
-            self.indices.insert(last_vw.vertex, 0);
-            self.min_heapify(0);
-            return Some(out);
+            self.weights.remove(self.len);
+            if self.len == 0 {
+                self.indices.remove(&last_vw.vertex);
+                return Some(last_vw);
+            } else {
+                let &vw = self.weights.get(0).unwrap();
+                let out = vw.clone();
+                self.weights[0] = last_vw;
+                self.indices.remove(&vw.vertex);
+                self.indices.insert(last_vw.vertex, 0);
+                self.min_heapify(0);
+                return Some(out);
+            }
         }
     }
 
@@ -166,7 +95,7 @@ impl<const D: usize> BinaryHeap<D> {
         let l_child_i = self.l_child(i);
         let r_child_i = self.r_child(i);
         let mut min_i = i;
-        if l_child_i > self.len {
+        if l_child_i < self.len {
             if let Some(vw) = self.weights.get(i) {
                 if let Some(l_vw) = self.weights.get(l_child_i) {
                     if l_vw.weight < vw.weight {
@@ -175,7 +104,7 @@ impl<const D: usize> BinaryHeap<D> {
                 }
             }
         }
-        if r_child_i > self.len {
+        if r_child_i < self.len {
             if let Some(vw) = self.weights.get(min_i) {
                 if let Some(r_vw) = self.weights.get(r_child_i) {
                     if r_vw.weight < vw.weight {

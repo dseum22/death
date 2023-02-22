@@ -1,8 +1,9 @@
+use crate::graph::elements::Vertex;
+use crate::graph::elements::VertexWeight;
 use crate::heap::BinaryHeap;
-use crate::heap::Vertex;
-use crate::heap::VertexWeight;
 use std::collections::HashMap;
 use std::env;
+mod graph;
 mod heap;
 
 /*The strategy is to iterate through vertices, mark verfied after removing from min heap, but also  remove it from the linked list */
@@ -26,11 +27,15 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
         let mut to_insert = Vec::new();
         while heap.len() != 0 {
             if main_flag == 1 {
-                println!("*******************************************");
-                println!("{:#?}", &heap);
+                println!("Heap before pop...");
+                println!("\t{:#?}", &heap);
             }
             if let Some(vertex_weight) = heap.pop() {
                 let vertex_v = &vertex_weight.vertex;
+                if main_flag == 1 {
+                    println!("Popped {:?}...", vertex_v);
+                    println!("\t{:#?}", &heap);
+                }
                 total_weight += vertex_weight.weight;
                 map.remove(&vertex_v);
                 for vertex_w in map.keys() {
@@ -44,9 +49,20 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                         weight = f32::sqrt(weight);
                     }
                     if let Some(added_weight) = map.get(&vertex_w) {
-                        if added_weight > &weight {
+                        if *added_weight > weight {
                             to_insert.push((*vertex_w, weight));
+                            if main_flag == 1 {
+                                println!("Heap before insert...");
+                                println!("\t{:#?}", &heap);
+                            }
                             heap.insert(VertexWeight::create(*vertex_w, weight));
+                            if main_flag == 1 {
+                                println!(
+                                    "Inserted {:?}...",
+                                    VertexWeight::create(*vertex_w, weight)
+                                );
+                                println!("\t{:#?}", &heap);
+                            }
                         }
                     }
                 }
