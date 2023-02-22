@@ -5,22 +5,19 @@ use std::hash::{Hash, Hasher};
 pub struct Vertex<const D: usize> {
     pub id: u32,
     pub coords: [f32; D],
-    pub val: f32,
 }
 
 impl<const D: usize> Vertex<D> {
-    pub fn create(id: u32) -> Self {
+    pub fn new(id: u32) -> Self {
         if D == 0 {
             let coords = [0.0; D];
-            let val = rand::thread_rng().gen_range(0.0..=1.0);
-            Self { id, coords, val }
+            Self { id, coords }
         } else {
             let mut coords = [0.0; D];
-            let val = 0.0;
             for i in 0..D {
                 coords[i] = rand::thread_rng().gen_range(0.0..=1.0);
             }
-            Self { id, coords, val }
+            Self { id, coords }
         }
     }
 }
@@ -46,7 +43,7 @@ pub struct VertexWeight<const D: usize> {
 }
 
 impl<const D: usize> VertexWeight<D> {
-    pub fn create(vertex: Vertex<D>, weight: f32) -> Self {
+    pub fn new(vertex: Vertex<D>, weight: f32) -> Self {
         Self { vertex, weight }
     }
 }

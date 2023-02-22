@@ -4,22 +4,20 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct BinaryHeap<const D: usize> {
-    len: usize,
     weights: Vec<VertexWeight<D>>,
     indices: HashMap<Vertex<D>, usize>,
 }
 
 impl<const D: usize> BinaryHeap<D> {
-    pub fn new(n: usize) -> Self {
+    pub fn new() -> Self {
         Self {
-            len: 0,
-            weights: Vec::<VertexWeight<D>>::with_capacity(n),
+            weights: Vec::<VertexWeight<D>>::new(),
             indices: HashMap::<Vertex<D>, usize>::new(),
         }
     }
 
     pub fn len(&self) -> usize {
-        self.len
+        self.weights.len()
     }
 
     fn parent(&self, i: usize) -> usize {
@@ -60,8 +58,7 @@ impl<const D: usize> BinaryHeap<D> {
                 self.sort(*index);
             }
             None => {
-                let i = self.len;
-                self.len += 1;
+                let i = self.len();
                 self.indices.insert(vw.vertex, i);
                 self.weights.push(vw);
                 self.sort(i);
@@ -70,13 +67,12 @@ impl<const D: usize> BinaryHeap<D> {
     }
 
     pub fn pop(&mut self) -> Option<VertexWeight<D>> {
-        if self.len == 0 {
+        if self.len() == 0 {
             return None;
         } else {
-            self.len -= 1;
-            let last_vw = self.weights.get(self.len).unwrap().clone();
-            self.weights.remove(self.len);
-            if self.len == 0 {
+            let last_vw = self.weights.get(self.len() - 1).unwrap().clone();
+            self.weights.remove(self.len() - 1);
+            if self.len() == 0 {
                 self.indices.remove(&last_vw.vertex);
                 return Some(last_vw);
             } else {
@@ -95,7 +91,7 @@ impl<const D: usize> BinaryHeap<D> {
         let l_child_i = self.l_child(i);
         let r_child_i = self.r_child(i);
         let mut min_i = i;
-        if l_child_i < self.len {
+        if l_child_i < self.len() {
             if let Some(vw) = self.weights.get(i) {
                 if let Some(l_vw) = self.weights.get(l_child_i) {
                     if l_vw.weight < vw.weight {
@@ -104,7 +100,7 @@ impl<const D: usize> BinaryHeap<D> {
                 }
             }
         }
-        if r_child_i < self.len {
+        if r_child_i < self.len() {
             if let Some(vw) = self.weights.get(min_i) {
                 if let Some(r_vw) = self.weights.get(r_child_i) {
                     if r_vw.weight < vw.weight {
