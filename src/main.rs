@@ -41,11 +41,11 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                     println!("\t{:#?}", &heap);
                 }
                 total_weight += vertex_weight.weight;
-                if vertex_weight.weight>max_weight {
-                    max_weight=vertex_weight.weight;
+                if vertex_weight.weight > max_weight {
+                    max_weight = vertex_weight.weight;
                 }
                 map.remove(&vertex_v);
-                (0..2).
+                // (0..2).
                 for vertex_w in map.keys() {
                     let mut weight = 0.0;
                     if D == 0 {
