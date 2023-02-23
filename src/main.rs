@@ -3,10 +3,12 @@ use crate::graph::VertexWeight;
 use crate::heap::BinaryHeap;
 use std::collections::HashMap;
 use std::env;
+use std::sync::RwLock;
 mod graph;
 mod heap;
 use rand::Rng;
 use rayon::prelude::*;
+use std::sync::Arc;
 use std::time::Instant;
 
 /*The strategy is to iterate through vertices, mark verfied after removing from min heap, but also  remove it from the linked list */
@@ -42,7 +44,7 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     let mut max_weight: f32 = 0.0;
     if let Some(root_vertex) = vertices.get(0) {
         heap.insert(VertexWeight::new(*root_vertex, 0.0));
-        let mut to_insert = Vec::new();
+        let to_insert = Arc::new(RwLock::new(Vec::new()));
         while heap.len() != 0 {
             if main_flag == 2 {
                 println!("Heap before pop...");
@@ -59,44 +61,54 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                     max_weight = vertex_weight.weight;
                 }
                 map.remove(&vertex_v);
-                // (0..2).
-                for vertex_w in map.keys() {
-                    let mut weight = 0.0;
-                    if D == 0 {
-                        weight = rand::thread_rng().gen_range(0.0..=1.0);
-                    } else {
-                        for i in 0..D {
-                            weight += f32::powi(vertex_v.coords[i] - vertex_w.coords[i], 2);
-                        }
-                        weight = f32::sqrt(weight);
-                    }
-                    if weight>upper_bound && num_vertices>128 {
-                        continue;
-                    }
-                    else 
-                    if let Some(added_weight) = map.get(&vertex_w) {
-                        if *added_weight > weight {
-                            to_insert.push((*vertex_w, weight));
-                            if main_flag == 2 {
-                                println!("Heap before insert...");
-                                println!("\t{:#?}", &heap);
+                let map_vec = map.keys().into_iter().collect::<Vec<_>>();
+                let map_len = map.len();
+                let chunk_size = if map_len > 1024 {
+                    map_len / 64 + 1
+                } else {
+                    map_len
+                };
+                if map_len != 0 {
+                    map_vec
+                        .par_chunks(chunk_size)
+                        .into_par_iter()
+                        .for_each(|vertices| {
+                            for vertex_w in vertices {
+                                let vertex_w = **vertex_w;
+                                let mut weight = 0.0;
+                                if D == 0 {
+                                    weight = rand::thread_rng().gen_range(0.0..=1.0);
+                                } else {
+                                    for i in 0..D {
+                                        weight +=
+                                            f32::powi(vertex_v.coords[i] - vertex_w.coords[i], 2);
+                                    }
+                                    weight = f32::sqrt(weight);
+                                }
+                                if let Some(added_weight) = map.get(&vertex_w) {
+                                    if *added_weight > weight {
+                                        to_insert.write().unwrap().push((vertex_w, weight));
+                                    }
+                                }
                             }
-                            heap.insert(VertexWeight::new(*vertex_w, weight));
-                            if main_flag == 2 {
-                                println!("Inserted {:?}...", VertexWeight::new(*vertex_w, weight));
-                                println!("\t{:#?}", &heap);
-                            }
+                        });
+                    for (vertex, weight) in to_insert.read().unwrap().iter() {
+                        map.insert(*vertex, *weight);
+                        if main_flag == 2 {
+                            println!("Heap before insert...");
+                            println!("\t{:#?}", &heap);
+                        }
+                        heap.insert(VertexWeight::new(*vertex, *weight));
+                        if main_flag == 2 {
+                            println!("Inserted {:?}...", VertexWeight::new(*vertex, *weight));
+                            println!("\t{:#?}", &heap);
                         }
                     }
+                    to_insert.write().unwrap().clear();
                 }
-                for (vertex, weight) in &to_insert {
-                    map.insert(*vertex, *weight);
-                }
-                to_insert.clear();
             }
         }
     }
-    println!("Ratio: {}", upper_bound/max_weight);
     total_weight
 }
 
