@@ -23,16 +23,17 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
 
     let mut upper_bound: f32 = 0.0;
     if D == 0 {
-            upper_bound=0.05*(f32::powf(0.54, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
-    }
-    else if D == 2 {
-        upper_bound=0.09*(f32::powf(0.75, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
-    }
-    else if D == 3 {
-        upper_bound=0.31*(f32::powf(0.815, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
-    }
-    else {
-        upper_bound=0.4*(f32::powf(0.84, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
+        upper_bound =
+            0.05 * (f32::powf(0.54, fast_math::log2_raw(num_vertices as f32) - 7.0) as f32);
+    } else if D == 2 {
+        upper_bound =
+            0.09 * (f32::powf(0.75, fast_math::log2_raw(num_vertices as f32) - 7.0) as f32);
+    } else if D == 3 {
+        upper_bound =
+            0.31 * (f32::powf(0.815, fast_math::log2_raw(num_vertices as f32) - 7.0) as f32);
+    } else {
+        upper_bound =
+            0.42 * (f32::powf(0.855, fast_math::log2_raw(num_vertices as f32) - 7.0) as f32);
     }
     for vertex in &vertices {
         if vertex.id == 0 {
@@ -61,7 +62,27 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                     max_weight = vertex_weight.weight;
                 }
                 map.remove(&vertex_v);
-                let map_vec = map.keys().into_iter().collect::<Vec<_>>();
+                let map_vec = map
+                    .keys()
+                    .into_iter()
+                    .filter_map(|vertex| {
+                        let vertex_w = *vertex;
+                        let mut weight = 0.0;
+                        if D == 0 {
+                            weight = rand::thread_rng().gen_range(0.0..=1.0);
+                        } else {
+                            for i in 0..D {
+                                weight += f32::powi(vertex_v.coords[i] - vertex_w.coords[i], 2);
+                            }
+                            weight = f32::sqrt(weight);
+                        }
+                        if weight < upper_bound {
+                            Some(VertexWeight::new(vertex_w, weight))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
                 let map_len = map.len();
                 let chunk_size = if map_len > 1024 {
                     map_len / 64 + 1
@@ -73,18 +94,9 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                         .par_chunks(chunk_size)
                         .into_par_iter()
                         .for_each(|vertices| {
-                            for vertex_w in vertices {
-                                let vertex_w = **vertex_w;
-                                let mut weight = 0.0;
-                                if D == 0 {
-                                    weight = rand::thread_rng().gen_range(0.0..=1.0);
-                                } else {
-                                    for i in 0..D {
-                                        weight +=
-                                            f32::powi(vertex_v.coords[i] - vertex_w.coords[i], 2);
-                                    }
-                                    weight = f32::sqrt(weight);
-                                }
+                            for vw in vertices {
+                                let vertex_w = vw.vertex;
+                                let weight = vw.weight;
                                 if let Some(added_weight) = map.get(&vertex_w) {
                                     if *added_weight > weight {
                                         to_insert.write().unwrap().push((vertex_w, weight));
@@ -109,6 +121,7 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
             }
         }
     }
+    println!("Ratio: {}", upper_bound / max_weight);
     total_weight
 }
 
