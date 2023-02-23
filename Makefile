@@ -1,3 +1,5 @@
+program :=randmst
+
 all:
 	cargo build --release
-	cp target/release/program-rust randmst
+	cp target/release/randmst randmst
