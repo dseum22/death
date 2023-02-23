@@ -1,4 +1,5 @@
-use rand::Rng;
+use rand::prelude::*;
+use rand_xoshiro::Xoshiro256PlusPlus;
 use std::hash::{Hash, Hasher};
 
 #[derive(Clone, Copy, Debug)]
@@ -13,9 +14,10 @@ impl<const D: usize> Vertex<D> {
             let coords = [0.0; D];
             Self { id, coords }
         } else {
+            let mut rng = Xoshiro256PlusPlus::from_entropy();
             let mut coords = [0.0; D];
             for i in 0..D {
-                coords[i] = rand::thread_rng().gen_range(0.0..=1.0);
+                coords[i] = rng.gen_range(0.0..=1.0);
             }
             Self { id, coords }
         }

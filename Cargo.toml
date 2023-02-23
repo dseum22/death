@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
+rand_xoshiro = "0.6.0"
 rayon = "1.6.1"
 fast-math = "0.1"
