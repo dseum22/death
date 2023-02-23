@@ -124,7 +124,6 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
             }
         }
     }
-    println!("Ratio: {}", upper_bound / max_weight);
     total_weight
 }
 
