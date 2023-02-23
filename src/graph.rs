@@ -1,8 +1,7 @@
-use rand::prelude::*;
-use rand_xoshiro::Xoshiro256PlusPlus;
+use rand::Rng;
 use std::hash::{Hash, Hasher};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Vertex<const D: usize> {
     pub id: u32,
     pub coords: [f32; D],
@@ -14,8 +13,8 @@ impl<const D: usize> Vertex<D> {
             let coords = [0.0; D];
             Self { id, coords }
         } else {
-            let mut rng = Xoshiro256PlusPlus::from_entropy();
             let mut coords = [0.0; D];
+            let mut rng = rand::thread_rng();
             for i in 0..D {
                 coords[i] = rng.gen_range(0.0..=1.0);
             }

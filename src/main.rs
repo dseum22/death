@@ -7,7 +7,7 @@ use std::sync::RwLock;
 mod graph;
 mod heap;
 use rand::prelude::*;
-use rand_xoshiro::Xoshiro256PlusPlus;
+use rand_xoshiro::Xoshiro256Plus;
 use rayon::prelude::*;
 use std::sync::Arc;
 use std::time::Instant;
@@ -21,7 +21,6 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     let mut heap = BinaryHeap::new();
     let mut map = HashMap::<Vertex<D>, f32>::new();
     let mut total_weight: f32 = 0.0;
-
     let mut upper_bound: f32 = 0.0;
     if D == 0 {
         upper_bound =
@@ -46,8 +45,8 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     let mut max_weight: f32 = 0.0;
     if let Some(root_vertex) = vertices.get(0) {
         heap.insert(VertexWeight::new(*root_vertex, 0.0));
-        let rng = Xoshiro256PlusPlus::from_entropy();
         let to_insert = Arc::new(RwLock::new(Vec::new()));
+        let mut rng = Xoshiro256Plus::from_entropy();
         while heap.len() != 0 {
             if main_flag == 2 {
                 println!("Heap before pop...");
@@ -64,14 +63,14 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                     max_weight = vertex_weight.weight;
                 }
                 map.remove(&vertex_v);
-                let map_vec = map
+                let f_map = map
                     .keys()
                     .into_iter()
                     .filter_map(|vertex| {
                         let vertex_w = *vertex;
                         let mut weight = 0.0;
                         if D == 0 {
-                            weight = rand::thread_rng().gen_range(0.0..=1.0);
+                            weight = rng.gen_range(0.0..=1.0);
                         } else {
                             for i in 0..D {
                                 weight += f32::powi(vertex_v.coords[i] - vertex_w.coords[i], 2);
@@ -85,15 +84,15 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                         }
                     })
                     .collect::<Vec<_>>();
-                let map_len = map.len();
+                let f_map_len = f_map.len();
                 // TODO: optimize chunk_size based on map_len
-                let chunk_size = if map_len > 1024 {
-                    map_len / 64 + 1
+                let chunk_size = if f_map_len > 1024 {
+                    f_map_len / 64 + 1
                 } else {
-                    map_len
+                    f_map_len
                 };
-                if map_len != 0 {
-                    map_vec
+                if f_map_len != 0 {
+                    f_map
                         .par_chunks(chunk_size)
                         .into_par_iter()
                         .for_each(|vertices| {
