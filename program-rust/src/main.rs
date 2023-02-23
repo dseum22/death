@@ -1,20 +1,16 @@
-use crate::graph::elements::Vertex;
-use crate::graph::elements::VertexWeight;
+use crate::graph::Vertex;
+use crate::graph::VertexWeight;
 use crate::heap::BinaryHeap;
 use std::collections::HashMap;
 use std::env;
 mod graph;
 mod heap;
 use rand::Rng;
-use std::thread;
-use std::time::Duration;
+use rayon::prelude::*;
 use std::time::Instant;
 
 /*The strategy is to iterate through vertices, mark verfied after removing from min heap, but also  remove it from the linked list */
 fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
-    if main_flag == 1 {
-        println!("\t1. Initializing vertices.");
-    }
     let vertices: Vec<Vertex<D>> = (0..num_vertices)
         .into_iter()
         .map(Vertex::<D>::new)
@@ -32,9 +28,6 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     if let Some(root_vertex) = vertices.get(0) {
         heap.insert(VertexWeight::new(*root_vertex, 0.0));
         let mut to_insert = Vec::new();
-        if main_flag == 1 {
-            println!("\t2. Beginning algorithm.");
-        }
         while heap.len() != 0 {
             if main_flag == 2 {
                 println!("Heap before pop...");
@@ -48,16 +41,6 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                 }
                 total_weight += vertex_weight.weight;
                 map.remove(&vertex_v);
-                // let map_len = map.len();
-                // let half_map_len = map_len / 2;
-                // let keys: Vec<&Vertex<D>> = map.keys().collect();
-                // let first_keys = &keys[0..half_map_len];
-                // let second_keys = &keys[half_map_len..map_len];
-                // let handle = thread::spawn(move || {
-                //     println!("Here's a vector: {:?}", v);
-                // });
-
-                // for i in half_map_len..map_len {}
                 for vertex_w in map.keys() {
                     let mut weight = 0.0;
                     if D == 0 {
@@ -100,50 +83,44 @@ fn main() {
     let num_vertices: u32 = args[2].trim().parse().expect("Argument is not a number.");
     let num_trials: u32 = args[3].trim().parse().expect("Argument is not a number.");
     let dim: u32 = args[4].trim().parse().expect("Argument is not a number.");
-    let mut total_weight: f32 = 0.0;
-    let mut total_duration: Duration = Duration::new(0, 0);
-    for i in 0..num_trials {
-        let now = Instant::now();
-        if main_flag == 1 {
-            println!("Beginning trial #{}...", i + 1);
-        }
-        match dim {
-            0 => {
-                total_weight += run_trial::<0>(num_vertices, main_flag);
-            }
-            1 => {
-                total_weight += run_trial::<1>(num_vertices, main_flag);
-            }
-            2 => {
-                total_weight += run_trial::<2>(num_vertices, main_flag);
-            }
-            3 => {
-                total_weight += run_trial::<3>(num_vertices, main_flag);
-            }
-            4 => {
-                total_weight += run_trial::<4>(num_vertices, main_flag);
-            }
-            _ => {
-                println!("Dimension must be less than 5.");
-            }
-        }
-        let elapsed = now.elapsed();
-        if main_flag == 1 {
-            total_duration += elapsed;
-            println!("\tDone in {:.2?}.", elapsed);
-        }
+    if !matches!(dim, 0 | 2 | 3 | 4) {
+        panic!("Unsupported dimension.");
+    }
+    let now = Instant::now();
+    if main_flag == 1 {
+        println!(
+            "Beginning {} trials for {} vertices of dimension {}...",
+            num_trials, num_vertices, dim
+        );
+    }
+    let average_weight = (0..num_trials)
+        .into_par_iter()
+        .map(|_| match dim {
+            0 => run_trial::<0>(num_vertices, main_flag),
+            2 => run_trial::<2>(num_vertices, main_flag),
+            3 => run_trial::<3>(num_vertices, main_flag),
+            4 => run_trial::<4>(num_vertices, main_flag),
+            _ => unreachable!(),
+        })
+        .sum::<f32>()
+        / (num_trials as f32);
+    let elapsed = now.elapsed();
+    if main_flag == 1 {
+        println!("\tDone in {:.2?}.", elapsed);
     }
     match main_flag {
-        0 => println!(),
+        0 => println!("{} {} {} {}", average_weight, num_vertices, num_trials, dim),
         1 => println!(
-            "Average weight: {}; Average time: {:2?}",
-            total_weight / (num_trials as f32),
-            total_duration.div_f32(num_trials as f32)
+            "Average weight: {}; Average time: {:2?}; Total time: {:2?}",
+            average_weight,
+            elapsed.div_f32(num_trials as f32),
+            elapsed
         ),
         2 => println!(
-            "Average weight: {}; Average time: {:2?}",
-            total_weight / (num_trials as f32),
-            total_duration.div_f32(num_trials as f32)
+            "Average weight: {}; Average time: {:2?}; Total time: {:2?}",
+            average_weight,
+            elapsed.div_f32(num_trials as f32),
+            elapsed
         ),
         _ => (),
     }

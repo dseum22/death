@@ -1,5 +1,5 @@
-use crate::graph::elements::Vertex;
-use crate::graph::elements::VertexWeight;
+use crate::graph::Vertex;
+use crate::graph::VertexWeight;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -118,6 +118,21 @@ impl<const D: usize> BinaryHeap<D> {
                 }
             }
             self.min_heapify(min_i);
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct BinomialHeap<const D: usize> {
+    weights: Vec<VertexWeight<D>>,
+    indices: HashMap<Vertex<D>, usize>,
+}
+
+impl<const D: usize> BinomialHeap<D> {
+    pub fn new() -> Self {
+        Self {
+            weights: Vec::<VertexWeight<D>>::new(),
+            indices: HashMap::<Vertex<D>, usize>::new(),
         }
     }
 }
