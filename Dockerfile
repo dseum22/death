@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 rust:1.63
+FROM rust:1.63
 
 RUN apt-get -y update && apt-get install -y
 
