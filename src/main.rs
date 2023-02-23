@@ -18,6 +18,20 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     let mut heap = BinaryHeap::new();
     let mut map = HashMap::<Vertex<D>, f32>::new();
     let mut total_weight: f32 = 0.0;
+
+    let mut upper_bound: f32 = 0.0;
+    if D == 0 {
+            upper_bound=0.05*(f32::powf(0.54, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
+    }
+    else if D == 2 {
+        upper_bound=0.09*(f32::powf(0.75, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
+    }
+    else if D == 3 {
+        upper_bound=0.31*(f32::powf(0.815, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
+    }
+    else {
+        upper_bound=0.4*(f32::powf(0.84, fast_math::log2_raw(num_vertices as f32)-7.0) as f32);
+    }
     for vertex in &vertices {
         if vertex.id == 0 {
             map.insert(*vertex, 0.0);
@@ -56,6 +70,10 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                         }
                         weight = f32::sqrt(weight);
                     }
+                    if weight>upper_bound && num_vertices>128 {
+                        continue;
+                    }
+                    else 
                     if let Some(added_weight) = map.get(&vertex_w) {
                         if *added_weight > weight {
                             to_insert.push((*vertex_w, weight));
@@ -78,7 +96,7 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
             }
         }
     }
-    println!("Max weight: {}", max_weight);
+    println!("Ratio: {}", upper_bound/max_weight);
     total_weight
 }
 
