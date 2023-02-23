@@ -25,6 +25,7 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
             map.insert(*vertex, 10.0);
         }
     }
+    let mut max_weight: f32 = 0.0;
     if let Some(root_vertex) = vertices.get(0) {
         heap.insert(VertexWeight::new(*root_vertex, 0.0));
         let mut to_insert = Vec::new();
@@ -40,6 +41,9 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
                     println!("\t{:#?}", &heap);
                 }
                 total_weight += vertex_weight.weight;
+                if vertex_weight.weight>max_weight {
+                    max_weight=vertex_weight.weight;
+                }
                 map.remove(&vertex_v);
                 for vertex_w in map.keys() {
                     let mut weight = 0.0;
@@ -73,7 +77,8 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
             }
         }
     }
-    total_weight
+    println!("Max weight: {}", max_weight);
+    total_weight 
 }
 
 fn main() {
