@@ -7,5 +7,4 @@ WORKDIR /code
 
 RUN cargo install --path .
 
-RUN dos2unix test.sh
 RUN chmod 755 test.sh

@@ -3,6 +3,7 @@ version: '3.9'
 services:
   main:
     build: .
-    command: ['./test.sh']
+    command: >
+      sh -c "dos2unix test.sh && ./test.sh"
     volumes:
       - .:/code
