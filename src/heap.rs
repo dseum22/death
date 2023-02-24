@@ -122,17 +122,21 @@ impl<const D: usize> BinaryHeap<D> {
     }
 }
 
-// #[derive(Debug)]
-// pub struct BinomialHeap<const D: usize> {
-//     weights: Vec<VertexWeight<D>>,
-//     indices: HashMap<Vertex<D>, usize>,
-// }
+#[derive(Debug)]
+pub struct PairingHeap<const D: usize> {
+    weights: Vec<VertexWeight<D>>,
+    indices: HashMap<Vertex<D>, usize>,
+}
 
-// impl<const D: usize> BinomialHeap<D> {
-//     pub fn new() -> Self {
-//         Self {
-//             weights: Vec::<VertexWeight<D>>::new(),
-//             indices: HashMap::<Vertex<D>, usize>::new(),
-//         }
-//     }
-// }
+impl<const D: usize> PairingHeap<D> {
+    pub fn new() -> Self {
+        Self {
+            weights: Vec::<VertexWeight<D>>::new(),
+            indices: HashMap::<Vertex<D>, usize>::new(),
+        }
+    }
+
+    pub fn insert(&mut self, vw: VertexWeight<D>) {}
+
+    fn decrease_key(&self, vw: VertexWeight<D>) {}
+}

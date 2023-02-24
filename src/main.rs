@@ -12,12 +12,14 @@ use rayon::prelude::*;
 use std::sync::Arc;
 use std::time::Instant;
 
-/*The strategy is to iterate through vertices, mark verfied after removing from min heap, but also  remove it from the linked list */
 fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     let vertices: Vec<Vertex<D>> = (0..num_vertices)
         .into_iter()
         .map(Vertex::<D>::new)
         .collect();
+    // Use blocks only using adjacent blocks for looking at vertices. put into blocks. look at adjacent blocks in hashmap, and look at closest vertices.
+    // put those closest vertices into the map and run algorithm until that heap is finished. add those weights to the overall weight and contineu to the next vertex, while making sure
+    // the next's vertex's cloest vertices dos not inlucde the vertices from before.
     let mut heap = BinaryHeap::new();
     let mut map = HashMap::<Vertex<D>, f32>::new();
     let mut total_weight: f32 = 0.0;
