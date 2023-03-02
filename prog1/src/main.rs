@@ -23,6 +23,7 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
     let mut heap = BinaryHeap::new();
     let mut map = HashMap::<Vertex<D>, f32>::new();
     let mut total_weight: f32 = 0.0;
+    #[allow(unused)]
     let mut upper_bound: f32 = 0.0;
     if D == 0 {
         upper_bound =
@@ -44,6 +45,7 @@ fn run_trial<const D: usize>(num_vertices: u32, main_flag: u32) -> f32 {
             map.insert(*vertex, 10.0);
         }
     }
+    let _hi = 42;
     let mut max_weight: f32 = 0.0;
     if let Some(root_vertex) = vertices.get(0) {
         heap.insert(VertexWeight::new(*root_vertex, 0.0));
